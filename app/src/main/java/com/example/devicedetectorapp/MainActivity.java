@@ -57,13 +57,17 @@ public class MainActivity extends AppCompatActivity {
 
     //This is Kyle's Comment to test
 
-    //Grant's merging comment
+    //Comment...
+
 
     //Adding another comment
 
-    //This is the line 64 comment
+  //I like Ice Cream
 
 
+
+
+    //I like 3.14
 
 
 }
