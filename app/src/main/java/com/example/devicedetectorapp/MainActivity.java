@@ -54,4 +54,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //Testing git conflict merging
+
+    //This is Kyle's Comment to test
+
 }
