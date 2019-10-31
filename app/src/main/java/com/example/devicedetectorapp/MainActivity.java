@@ -57,6 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
     //This is Kyle's Comment to test
 
-    //Grant's merging comment
+    //Comment...
 
 }
