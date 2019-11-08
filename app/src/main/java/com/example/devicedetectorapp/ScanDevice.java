@@ -8,7 +8,7 @@ public class ScanDevice {
     private int installDate;
     private int replaceDate;
 
-    public void Device() {
+    public ScanDevice() {
         name = null;
         type = null;
         ipAddress = null;
