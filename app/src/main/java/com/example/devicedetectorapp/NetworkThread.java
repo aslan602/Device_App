@@ -20,11 +20,12 @@ import static androidx.core.content.ContextCompat.getSystemService;
 public class NetworkThread implements Runnable {
 
     private ServerSocket serverSocket;
-    private int localPort;
-    private String serviceName;
+    private int localPort; //port later set to 5000 in initializeServerSocket
+
+    private String serviceName =("NSDname");
     private static NsdManager nsdManager;
     private static NsdManager.DiscoveryListener discoveryListener;
-    private final static String SERVICE_TYPE =
+    private final static String SERVICE_TYPE = ("_NSDname._");
     private static final String DEBUG_TAG = "NetworkStatus";
     private MainActivity activity;
     private static final String TAG = "NSD Service";
@@ -58,6 +59,10 @@ public class NetworkThread implements Runnable {
         }
     }
 
+    private void getSystemService(String connectivityService) {
+
+    }
+
     private void startNSDManager() {
         nsdManager.discoverServices(
                 SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
@@ -68,7 +73,7 @@ public class NetworkThread implements Runnable {
 
         // Initialize a server socket on the next available port.
         try {
-            serverSocket = new ServerSocket(0);
+            serverSocket = new ServerSocket(5000);
         } catch (IOException e) {
             e.printStackTrace();
         }
