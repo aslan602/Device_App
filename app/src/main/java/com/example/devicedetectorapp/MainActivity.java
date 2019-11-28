@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class MainActivity extends AppCompatActivity {
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -17,8 +18,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    protected void onPause() {
+        if (nsdHelper != null) {
+            nsdHelper.tearDown();
+        }
+        super.onPause();
+    }
 
-   // Here is where I copied code to understand it better (Kyle).
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (nsdHelper != null) {
+            nsdHelper.registerService(connection.getLocalPort());
+            nsdHelper.discoverServices();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        nsdHelper.tearDown();
+        connection.tearDown();
+        super.onDestroy();
+    }
+
+    // NsdHelper's tearDown method
+    public void tearDown() {
+        nsdManager.unregisterService(registrationListener);
+        nsdManager.stopServiceDiscovery(discoveryListener);
+    }
+
+}
+
+
+
+
+// Here is where I copied code to understand it better (Kyle).
 
 
 

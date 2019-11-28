@@ -17,17 +17,22 @@ import static androidx.core.content.ContextCompat.getSystemService;
 
 
 
-public class NetworkThread implements Runnable {
+public class NetworkThread implements Runnable, RegistrationListener, DiscoveryListener, ResolveListener {
 
     private ServerSocket serverSocket;
     private int localPort;
     private String serviceName;
-    private static NsdManager nsdManager;
-    private static NsdManager.DiscoveryListener discoveryListener;
-    private final static String SERVICE_TYPE =
+    private NsdManager nsdManager;
+    private NsdManager.DiscoveryListener discoveryListener;
+    private String SERVICE_TYPE = "_http._tcp.";
+    private String REGISTER_TAG = "Registration:";
     private static final String DEBUG_TAG = "NetworkStatus";
     private MainActivity activity;
     private static final String TAG = "NSD Service";
+    private NsdManager.RegistrationListener registrationListener;
+    private NsdManager.ResolveListener resolveListener;
+    public NsdServiceInfo mService;
+
 
     public void run() {
         // Check to see if there is a WiFi connection.
@@ -48,6 +53,8 @@ public class NetworkThread implements Runnable {
         Log.d(DEBUG_TAG, "Wifi connected: " + isWifiConn);
         Log.d(DEBUG_TAG, "Mobile connected: " + isMobileConn);
         if (isWifiConn == true) {
+            initializeServerSocket();
+            registerService(localPort);
             startNSDManager();
         } else {
             activity.runOnUiThread(new Runnable() {
@@ -58,7 +65,57 @@ public class NetworkThread implements Runnable {
         }
     }
 
-    private void startNSDManager() {
+    public void initializeRegistrationListener() {
+        registrationListener = new NsdManager.RegistrationListener() {
+
+            @Override
+            public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
+                // Save the service name. Android may have changed it in order to
+                // resolve a conflict, so update the name you initially requested
+                // with the name Android actually used.
+                serviceName = NsdServiceInfo.getServiceName();
+                Log.d(REGISTER_TAG, "Registration Successful");
+                Log.d(REGISTER_TAG, "The registered name is " + serviceName);
+            }
+
+            @Override
+            public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                // Registration failed! Put debugging code here to determine why.
+                Log.e(REGISTER_TAG, "Registration Failed with code " + errorCode);
+                Log.e(REGISTER_TAG, "and Failed Service " + serviceInfo);
+            }
+
+            @Override
+            public void onServiceUnregistered(NsdServiceInfo arg0) {
+                // Service has been unregistered. This only happens when you call
+                // NsdManager.unregisterService() and pass in this listener.
+                Log.d(REGISTER_TAG, "Service is Unregistered.");
+            }
+
+            @Override
+            public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                // Unregistration failed. Put debugging code here to determine why.
+                Log.e(REGISTER_TAG, "Failed to Unregister with code " + errorCode);
+                Log.e(REGISTER_TAG, "and Failed Unregistered Service " + serviceInfo);
+            }
+        };
+    }
+
+    public void registerService(int port) {
+        NsdServiceInfo serviceInfo = new NsdServiceInfo();
+        serviceInfo.setServiceName("Device_Detector");
+        serviceInfo.setServiceType("_http._tcp.");
+        serviceInfo.setPort(port);
+
+        nsdManager = Context.getSystemService(Context.NSD_SERVICE);
+
+
+        nsdManager.registerService(
+                serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener);
+    }
+
+
+    public void startNSDManager() {
         nsdManager.discoverServices(
                 SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
     }
@@ -72,51 +129,10 @@ public class NetworkThread implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         // Store the chosen port.
         localPort = serverSocket.getLocalPort();
     }
 
-    public void initializeRegistrationListener() {
-        NsdManager.RegistrationListener registrationListener = new NsdManager.RegistrationListener() {
-
-            @Override
-            public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
-                // Save the service name. Android may have changed it in order to
-                // resolve a conflict, so update the name you initially requested
-                // with the name Android actually used.
-                serviceName = NsdServiceInfo.getServiceName();
-            }
-
-            @Override
-            public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                // Registration failed! Put debugging code here to determine why.
-            }
-
-            @Override
-            public void onServiceUnregistered(NsdServiceInfo arg0) {
-                // Service has been unregistered. This only happens when you call
-                // NsdManager.unregisterService() and pass in this listener.
-            }
-
-            @Override
-            public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                // Unregistration failed. Put debugging code here to determine why.
-            }
-        };
-    }
-
-    public void registerService(int port) {
-        NsdServiceInfo serviceInfo = new NsdServiceInfo();
-        serviceInfo.setServiceName("NsdChat");
-        serviceInfo.setServiceType("_http._tcp.");
-        serviceInfo.setPort(port);
-
-        nsdManager = Context.getSystemService(Context.NSD_SERVICE);
-
-        nsdManager.registerService(
-                serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener);
-    }
 
 
     public void initializeDiscoveryListener() {
@@ -194,38 +210,10 @@ public class NetworkThread implements Runnable {
                 mService = serviceInfo;
                 int port = mService.getPort();
                 InetAddress host = mService.getHost();
+                nsdHelper helper = new nsdHelper();
+                helper.setPort(port);
+                helper.setHost(host);
+
             }
         };
     }
-
-    @Override
-    protected void onPause() {
-        if (nsdHelper != null) {
-            nsdHelper.tearDown();
-        }
-        super.onPause();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (nsdHelper != null) {
-            nsdHelper.registerService(connection.getLocalPort());
-            nsdHelper.discoverServices();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        nsdHelper.tearDown();
-        connection.tearDown();
-        super.onDestroy();
-    }
-
-    // NsdHelper's tearDown method
-    public void tearDown() {
-        nsdManager.unregisterService(registrationListener);
-        nsdManager.stopServiceDiscovery(discoveryListener);
-    }
-
-}
