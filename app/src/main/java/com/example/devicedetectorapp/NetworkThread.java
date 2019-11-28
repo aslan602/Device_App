@@ -149,32 +149,32 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
                 serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener);
     }
 
-
+    /** starts NSDManager service */
     public void startNSDManager() {
         nsdManager.discoverServices(
                 SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
     }
 
-
+    /** gets available port number and applies to ServerSocket */
     public void initializeServerSocket() {
 
-        // Initialize a server socket on the next available port.
+        /** Initialize a server socket on the next available port. */
         try {
             serverSocket = new ServerSocket(0);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // Store the chosen port.
+        /** Store the chosen port. */
         localPort = serverSocket.getLocalPort();
     }
 
 
     public void initializeDiscoveryListener() {
 
-        // Instantiate a new DiscoveryListener
+        /** Instantiate a new DiscoveryListener */
         discoveryListener = new NsdManager.DiscoveryListener() {
 
-            // Called as soon as service discovery begins.
+            /** Called as soon as service discovery begins. */
             @Override
             public void onDiscoveryStarted(String regType) {
                 Log.d(TAG, "Service discovery started");
@@ -203,24 +203,25 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
                 }
             }
 
+            /** If WiFi is Lost, create log of service lost*/
             @Override
             public void onServiceLost(NsdServiceInfo service) {
                 // When the network service is no longer available.
                 // Internal bookkeeping code goes here.
                 Log.e(TAG, "service lost: " + service);
             }
-
+            /** If discovery is stopped throw error log*/
             @Override
             public void onDiscoveryStopped(String serviceType) {
                 Log.i(TAG, "Discovery stopped: " + serviceType);
             }
-
+            /** Log error thrown when StartDiscovery fails */
             @Override
             public void onStartDiscoveryFailed(String serviceType, int errorCode) {
                 Log.e(TAG, "Discovery failed: Error code:" + errorCode);
                 nsdManager.stopServiceDiscovery(this);
             }
-
+            /** Log error thrown when StopDiscovery fails */
             @Override
             public void onStopDiscoveryFailed(String serviceType, int errorCode) {
                 Log.e(TAG, "Discovery failed: Error code:" + errorCode);
@@ -233,9 +234,9 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
     public void initializeResolveListener() {
         resolveListener = new NsdManager.ResolveListener() {
 
+            /** When resolve fails, throw error code */
             @Override
             public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                // Called when the resolve fails. Use the error code to debug.
                 Log.e(TAG, "Resolve failed: " + errorCode);
             }
             /**
