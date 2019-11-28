@@ -15,7 +15,18 @@ import java.net.ServerSocket;
 
 import static androidx.core.content.ContextCompat.getSystemService;
 
-
+/**
+ * NetworkThread implements Runnable, RegistrationListener, Discovery Listener, and Resolve Listener
+ *
+ * Needed moves:
+ * Registration in class (new file) -- Registration Listener (callback)
+ * ServiceDiscovery in class (new file) -- DiscoveryListener (callback)
+ * ResolveListener in class (new file) -- ResolveListener - need to figure how to save devices
+ * (ScanDevice class)
+ *
+ * Interfaces implemented????
+ *
+ */
 
 public class NetworkThread implements Runnable, RegistrationListener, DiscoveryListener, ResolveListener {
 
@@ -33,7 +44,12 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
     private NsdManager.ResolveListener resolveListener;
     public NsdServiceInfo mService;
 
-
+    /**
+     * run() runs starts MainActivity  in new thread
+     * checks WiFi connection through for loop
+     *
+     * Need to break thread if WiFi is not available
+     */
     public void run() {
         // Check to see if there is a WiFi connection.
 
@@ -52,27 +68,39 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
         }
         Log.d(DEBUG_TAG, "Wifi connected: " + isWifiConn);
         Log.d(DEBUG_TAG, "Mobile connected: " + isMobileConn);
+
+        /**
+         * if there is an available WiFi connection, start process of ServerSocket, registerService,
+         * and NSDManager
+         */
         if (isWifiConn == true) {
-            initializeServerSocket();
-            registerService(localPort);
-            startNSDManager();
-        } else {
+            initializeServerSocket(); /** Find available port number */
+            registerService(localPort); /** Register port number on WiFi service */
+            startNSDManager(); /** Starts service discovery */
+        } else { /** Not on WiFi network break thread and throw error message */
             activity.runOnUiThread(new Runnable() {
-                public void run() {
-                    Toast.makeText(this, "WiFi connection not available.", Toast.LENGTH_LONG).show();
+                public void run() { /** update to this format: [name].interrupt()*/
+                    Toast.makeText("WiFi connection not available.", this, Toast.LENGTH_LONG).show();
                 }
             });
         }
     }
 
+    /**
+     * initializeRegistrationListener(): callback function checks to see what succeeded and failed in
+     * device registration - part of NSDHelper
+     *
+     */
     public void initializeRegistrationListener() {
         registrationListener = new NsdManager.RegistrationListener() {
 
             @Override
             public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
-                // Save the service name. Android may have changed it in order to
-                // resolve a conflict, so update the name you initially requested
-                // with the name Android actually used.
+                /**
+                 * Save the service name. Android may have changed it in order to
+                 * resolve a conflict, so update the name you initially requested
+                 * with the name Android actually used.
+                 */
                 serviceName = NsdServiceInfo.getServiceName();
                 Log.d(REGISTER_TAG, "Registration Successful");
                 Log.d(REGISTER_TAG, "The registered name is " + serviceName);
@@ -80,18 +108,21 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
 
             @Override
             public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                // Registration failed! Put debugging code here to determine why.
+                /** Registration failed!debugging code here to determine why. Could be log for debugging.*/
                 Log.e(REGISTER_TAG, "Registration Failed with code " + errorCode);
                 Log.e(REGISTER_TAG, "and Failed Service " + serviceInfo);
             }
 
             @Override
             public void onServiceUnregistered(NsdServiceInfo arg0) {
-                // Service has been unregistered. This only happens when you call
-                // NsdManager.unregisterService() and pass in this listener.
+                /** Only called if service is unregistered */
+                /**
+                * Service has been unregistered. This only happens when you call
+                * NsdManager.unregisterService() and pass in this listener.
+                */
                 Log.d(REGISTER_TAG, "Service is Unregistered.");
             }
-
+            /** throws error code for failed registration */
             @Override
             public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
                 // Unregistration failed. Put debugging code here to determine why.
@@ -100,16 +131,20 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
             }
         };
     }
-
+    /**
+     * registerService: registers devices found on WiFi
+     * gets on WiFi and registers the service and the port through serviceInfo class
+     */
     public void registerService(int port) {
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName("Device_Detector");
-        serviceInfo.setServiceType("_http._tcp.");
+        serviceInfo.setServiceType(SERVICE_TYPE);
         serviceInfo.setPort(port);
 
+        /** gets nsdManager services variables*/
         nsdManager = Context.getSystemService(Context.NSD_SERVICE);
 
-
+        /** starts registerService (built in class) writes */
         nsdManager.registerService(
                 serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener);
     }
@@ -134,7 +169,6 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
     }
 
 
-
     public void initializeDiscoveryListener() {
 
         // Instantiate a new DiscoveryListener
@@ -146,19 +180,25 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
                 Log.d(TAG, "Service discovery started");
             }
 
+            /** Finds Service (device connects to the network)
+             * creates logs and sends to resolveService
+             */
             @Override
             public void onServiceFound(NsdServiceInfo service) {
-                // A service was found! Do something with it.
+                /** A service was found! Do something with it. */
                 Log.d(TAG, "Service discovery success" + service);
                 if (!service.getServiceType().equals(SERVICE_TYPE)) {
-                    // Service type is the string containing the protocol and
-                    // transport layer for this service.
+                    /** Service type is the string containing the protocol and
+                    * transport layer for this service.
+                     */
                     Log.d(TAG, "Unknown Service Type: " + service.getServiceType());
                 } else if (service.getServiceName().equals(serviceName)) {
-                    // The name of the service tells the user what they'd be
-                    // connecting to. It could be "Bob's Chat App".
+                    /** The name of the service tells the user what they'd be
+                    * connecting to. It could be "Bob's Chat App".
+                     */
                     Log.d(TAG, "Same machine: " + serviceName);
-                } else if (service.getServiceName().contains("NsdChat")){
+                } else if (service.getServiceName().contains("NsdChat")) {
+                    /** Sends to resolveService */
                     nsdManager.resolveService(service, resolveListener);
                 }
             }
@@ -198,7 +238,16 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
                 // Called when the resolve fails. Use the error code to debug.
                 Log.e(TAG, "Resolve failed: " + errorCode);
             }
-
+            /**
+             * enter into new class, add port number, ip address
+             * get more information from nsdServiceInfo -- built in class
+             * -dates, Operating System
+             *
+             * -connect to Scan device class
+             *
+             * onServiceResolved:
+             * End of scan process to get data on service name and port number.
+             */
             @Override
             public void onServiceResolved(NsdServiceInfo serviceInfo) {
                 Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
@@ -217,3 +266,5 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
             }
         };
     }
+
+}

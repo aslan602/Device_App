@@ -4,10 +4,21 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+/**
+ * MainActivity contains
+ * onCreate: creates new thread
+ * onPause:  stops program with tearDown - still needs to be programmed
+ * onResume: resumes program / restart discovery
+ * onDestroy:  stops the program
+ * tearDown: needs to be moved to nsdHelper
+ */
+
 public class MainActivity extends AppCompatActivity {
 
 
-
+    /**
+     * Creates new thread in NetworkThread and runs new thread.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -17,7 +28,10 @@ public class MainActivity extends AppCompatActivity {
         thread.start();
     }
 
-
+    /**
+     * Needs to be implemented
+     * Stops program with tearDown
+     */
     @Override
     protected void onPause() {
         if (nsdHelper != null) {
@@ -25,6 +39,11 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onPause();
     }
+
+    /**
+     * onResume: resumes/ restart discovery
+     * need to figure out ndsHelper, registerService, and discoverServices
+     */
 
     @Override
     protected void onResume() {
@@ -34,6 +53,9 @@ public class MainActivity extends AppCompatActivity {
             nsdHelper.discoverServices();
         }
     }
+    /**
+     * onDestroy: stops the program
+     */
 
     @Override
     protected void onDestroy() {
@@ -42,6 +64,10 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    /**
+     * Move to NSDHelper
+     * tearDown: stops services and discovery
+     */
     // NsdHelper's tearDown method
     public void tearDown() {
         nsdManager.unregisterService(registrationListener);
@@ -49,29 +75,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 }
-
-
-
-
-// Here is where I copied code to understand it better (Kyle).
-
-
-
-    //Testing git conflict merging
-
-    //This is Kyle's Comment to test
-
-    //Comment...
-
-
-    //Adding another comment
-
-  //I like Ice Cream
-
- //Erika was here
-
-
-    //I like 3.14
 
 
 }
