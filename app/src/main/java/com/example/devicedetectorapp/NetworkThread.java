@@ -134,7 +134,6 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
     }
 
 
-
     public void initializeDiscoveryListener() {
 
         // Instantiate a new DiscoveryListener
@@ -158,7 +157,7 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
                     // The name of the service tells the user what they'd be
                     // connecting to. It could be "Bob's Chat App".
                     Log.d(TAG, "Same machine: " + serviceName);
-                } else if (service.getServiceName().contains("NsdChat")){
+                } else if (service.getServiceName().contains("NsdChat")) {
                     nsdManager.resolveService(service, resolveListener);
                 }
             }
@@ -217,3 +216,4 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
             }
         };
     }
+}
