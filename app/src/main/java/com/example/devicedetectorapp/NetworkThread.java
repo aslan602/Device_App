@@ -15,9 +15,20 @@ import java.net.ServerSocket;
 
 import static androidx.core.content.ContextCompat.getSystemService;
 
+/**
+ * NetworkThread implements Runnable, RegistrationListener, Discovery Listener, and Resolve Listener
+ *
+ * Needed moves:
+ * Registration in class (new file) -- Registration Listener (callback)
+ * ServiceDiscovery in class (new file) -- DiscoveryListener (callback)
+ * ResolveListener in class (new file) -- ResolveListener - need to figure how to save devices
+ * (ScanDevice class)
+ *
+ * Interfaces implemented????
+ *
+ */
 
-
-public class NetworkThread implements Runnable, RegistrationListener, DiscoveryListener, ResolveListener {
+public class NetworkThread implements Runnable {
 
     private ServerSocket serverSocket;
     private int localPort;
@@ -33,7 +44,12 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
     private NsdManager.ResolveListener resolveListener;
     public NsdServiceInfo mService;
 
-
+    /**
+     * run() runs starts MainActivity  in new thread
+     * checks WiFi connection through for loop
+     *
+     * Need to break thread if WiFi is not available
+     */
     public void run() {
         // Check to see if there is a WiFi connection.
 
@@ -52,168 +68,22 @@ public class NetworkThread implements Runnable, RegistrationListener, DiscoveryL
         }
         Log.d(DEBUG_TAG, "Wifi connected: " + isWifiConn);
         Log.d(DEBUG_TAG, "Mobile connected: " + isMobileConn);
+
+        /**
+         * if there is an available WiFi connection, start process of ServerSocket, registerService,
+         * and NSDManager
+         */
         if (isWifiConn == true) {
-            initializeServerSocket();
-            registerService(localPort);
-            startNSDManager();
-        } else {
+            initializeServerSocket(); /** Find available port number */
+            registerService(localPort); /** Register port number on WiFi service */
+            startNSDManager(); /** Starts service discovery */
+        } else { /** Not on WiFi network break thread and throw error message */
             activity.runOnUiThread(new Runnable() {
-                public void run() {
-                    Toast.makeText(this, "WiFi connection not available.", Toast.LENGTH_LONG).show();
+                public void run() { /** update to this format: [name].interrupt()*/
+                    Toast.makeText("WiFi connection not available.", this, Toast.LENGTH_LONG).show();
                 }
             });
         }
     }
 
-    public void initializeRegistrationListener() {
-        registrationListener = new NsdManager.RegistrationListener() {
-
-            @Override
-            public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
-                // Save the service name. Android may have changed it in order to
-                // resolve a conflict, so update the name you initially requested
-                // with the name Android actually used.
-                serviceName = NsdServiceInfo.getServiceName();
-                Log.d(REGISTER_TAG, "Registration Successful");
-                Log.d(REGISTER_TAG, "The registered name is " + serviceName);
-            }
-
-            @Override
-            public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                // Registration failed! Put debugging code here to determine why.
-                Log.e(REGISTER_TAG, "Registration Failed with code " + errorCode);
-                Log.e(REGISTER_TAG, "and Failed Service " + serviceInfo);
-            }
-
-            @Override
-            public void onServiceUnregistered(NsdServiceInfo arg0) {
-                // Service has been unregistered. This only happens when you call
-                // NsdManager.unregisterService() and pass in this listener.
-                Log.d(REGISTER_TAG, "Service is Unregistered.");
-            }
-
-            @Override
-            public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                // Unregistration failed. Put debugging code here to determine why.
-                Log.e(REGISTER_TAG, "Failed to Unregister with code " + errorCode);
-                Log.e(REGISTER_TAG, "and Failed Unregistered Service " + serviceInfo);
-            }
-        };
-    }
-
-    public void registerService(int port) {
-        NsdServiceInfo serviceInfo = new NsdServiceInfo();
-        serviceInfo.setServiceName("Device_Detector");
-        serviceInfo.setServiceType("_http._tcp.");
-        serviceInfo.setPort(port);
-
-        nsdManager = Context.getSystemService(Context.NSD_SERVICE);
-
-
-        nsdManager.registerService(
-                serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener);
-    }
-
-
-    public void startNSDManager() {
-        nsdManager.discoverServices(
-                SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
-    }
-
-
-    public void initializeServerSocket() {
-
-        // Initialize a server socket on the next available port.
-        try {
-            serverSocket = new ServerSocket(0);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // Store the chosen port.
-        localPort = serverSocket.getLocalPort();
-    }
-
-
-    public void initializeDiscoveryListener() {
-
-        // Instantiate a new DiscoveryListener
-        discoveryListener = new NsdManager.DiscoveryListener() {
-
-            // Called as soon as service discovery begins.
-            @Override
-            public void onDiscoveryStarted(String regType) {
-                Log.d(TAG, "Service discovery started");
-            }
-
-            @Override
-            public void onServiceFound(NsdServiceInfo service) {
-                // A service was found! Do something with it.
-                Log.d(TAG, "Service discovery success" + service);
-                if (!service.getServiceType().equals(SERVICE_TYPE)) {
-                    // Service type is the string containing the protocol and
-                    // transport layer for this service.
-                    Log.d(TAG, "Unknown Service Type: " + service.getServiceType());
-                } else if (service.getServiceName().equals(serviceName)) {
-                    // The name of the service tells the user what they'd be
-                    // connecting to. It could be "Bob's Chat App".
-                    Log.d(TAG, "Same machine: " + serviceName);
-                } else if (service.getServiceName().contains("NsdChat")) {
-                    nsdManager.resolveService(service, resolveListener);
-                }
-            }
-
-            @Override
-            public void onServiceLost(NsdServiceInfo service) {
-                // When the network service is no longer available.
-                // Internal bookkeeping code goes here.
-                Log.e(TAG, "service lost: " + service);
-            }
-
-            @Override
-            public void onDiscoveryStopped(String serviceType) {
-                Log.i(TAG, "Discovery stopped: " + serviceType);
-            }
-
-            @Override
-            public void onStartDiscoveryFailed(String serviceType, int errorCode) {
-                Log.e(TAG, "Discovery failed: Error code:" + errorCode);
-                nsdManager.stopServiceDiscovery(this);
-            }
-
-            @Override
-            public void onStopDiscoveryFailed(String serviceType, int errorCode) {
-                Log.e(TAG, "Discovery failed: Error code:" + errorCode);
-                nsdManager.stopServiceDiscovery(this);
-            }
-        };
-    }
-
-
-    public void initializeResolveListener() {
-        resolveListener = new NsdManager.ResolveListener() {
-
-            @Override
-            public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                // Called when the resolve fails. Use the error code to debug.
-                Log.e(TAG, "Resolve failed: " + errorCode);
-            }
-
-            @Override
-            public void onServiceResolved(NsdServiceInfo serviceInfo) {
-                Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
-
-                if (serviceInfo.getServiceName().equals(serviceName)) {
-                    Log.d(TAG, "Same IP.");
-                    return;
-                }
-                mService = serviceInfo;
-                int port = mService.getPort();
-                InetAddress host = mService.getHost();
-                nsdHelper helper = new nsdHelper();
-                helper.setPort(port);
-                helper.setHost(host);
-
-            }
-        };
-    }
 }
