@@ -14,7 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
  */
 
 public class MainActivity extends AppCompatActivity {
-
+    public NetworkThread nt;
 
     /**
      * Creates new thread in NetworkThread and runs new thread.
@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Thread thread = new Thread(NetworkThread);
+        Thread thread = new Thread(nt);
         thread.start();
     }
 
@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         if (nsdHelper != null) {
-            nsdHelper.tearDown();
+            //nsdHelper.tearDown();
         }
         super.onPause();
     }
@@ -49,8 +49,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (nsdHelper != null) {
-            nsdHelper.registerService(connection.getLocalPort());
-            nsdHelper.discoverServices();
+            //nsdHelper.registerService(connection.getLocalPort());
+            //nsdHelper.discoverServices();
         }
     }
     /**
@@ -59,9 +59,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        /*
         nsdHelper.tearDown();
         connection.tearDown();
         super.onDestroy();
+         */
     }
 
     /**
@@ -70,8 +72,8 @@ public class MainActivity extends AppCompatActivity {
      */
     // NsdHelper's tearDown method
     public void tearDown() {
-        nsdManager.unregisterService(registrationListener);
-        nsdManager.stopServiceDiscovery(discoveryListener);
+        //nsdManager.unregisterService(registrationListener);
+        //nsdManager.stopServiceDiscovery(discoveryListener);
     }
 
 }

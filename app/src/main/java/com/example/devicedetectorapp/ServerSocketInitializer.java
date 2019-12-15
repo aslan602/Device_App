@@ -1,8 +1,12 @@
 package com.example.devicedetectorapp;
 
-public class ServerSocket {
+import java.net.ServerSocket;
+import java.io.IOException;
+
+public class ServerSocketInitializer {
+    private ServerSocket serverSocket;
     /** gets available port number and applies to ServerSocket */
-    public void initializeServerSocket() {
+    public int initializeServerSocket() {
         /** Initialize a server socket on the next available port. */
         try {
             serverSocket = new ServerSocket(0);
@@ -10,6 +14,6 @@ public class ServerSocket {
             e.printStackTrace();
         }
         /** Store the chosen port. */
-        localPort = serverSocket.getLocalPort();
+        return serverSocket.getLocalPort();
     }
 }

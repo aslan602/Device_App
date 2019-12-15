@@ -9,7 +9,6 @@ import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 
@@ -29,18 +28,14 @@ import static androidx.core.content.ContextCompat.getSystemService;
  */
 
 public class NetworkThread implements Runnable {
-
-    private ServerSocket serverSocket;
+    private NsdManager nsdManager;
     private int localPort;
     private String serviceName;
-    private NsdManager nsdManager;
     private NsdManager.DiscoveryListener discoveryListener;
-    private String SERVICE_TYPE = "_http._tcp.";
     private String REGISTER_TAG = "Registration:";
     private static final String DEBUG_TAG = "NetworkStatus";
     private MainActivity activity;
     private static final String TAG = "NSD Service";
-    private NsdManager.RegistrationListener registrationListener;
     private NsdManager.ResolveListener resolveListener;
     public NsdServiceInfo mService;
 
@@ -53,8 +48,7 @@ public class NetworkThread implements Runnable {
     public void run() {
         // Check to see if there is a WiFi connection.
 
-        ConnectivityManager connMgr =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connMgr = (ConnectivityManager).getSystemService(Context.CONNECTIVITY_SERVICE);
         boolean isWifiConn = false;
         boolean isMobileConn = false;
         for (Network network : connMgr.getAllNetworks()) {
@@ -74,9 +68,14 @@ public class NetworkThread implements Runnable {
          * and NSDManager
          */
         if (isWifiConn == true) {
-            initializeServerSocket(); /** Find available port number */
-            registerService(localPort); /** Register port number on WiFi service */
-            startNSDManager(); /** Starts service discovery */
+            ServerSocketInitializer ss = new ServerSocketInitializer();
+            localPort = ss.initializeServerSocket(); /** Find available port number */
+
+            ServiceRegister sr = new ServiceRegister();
+            nsdManager = sr.registerService(localPort); /** Register port number on WiFi service */
+
+            NSDManagerStarter ms = new NSDManagerStarter();
+            ms.startNSDManager(nsdManager); /** Starts service discovery */
         } else { /** Not on WiFi network break thread and throw error message */
             activity.runOnUiThread(new Runnable() {
                 public void run() { /** update to this format: [name].interrupt()*/
