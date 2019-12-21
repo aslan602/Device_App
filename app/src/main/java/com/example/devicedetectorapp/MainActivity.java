@@ -1,6 +1,7 @@
 package com.example.devicedetectorapp;
 
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -23,7 +24,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+    }
 
+    public void runThread(View view) {
         Thread thread = new Thread(nt);
         thread.start();
     }
@@ -32,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
      * Needs to be implemented
      * Stops program with tearDown
      */
+    /*
     @Override
     protected void onPause() {
         if (nsdHelper != null) {
@@ -39,12 +43,14 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onPause();
     }
+     */
 
     /**
      * onResume: resumes/ restart discovery
      * need to figure out ndsHelper, registerService, and discoverServices
      */
 
+    /*
     @Override
     protected void onResume() {
         super.onResume();
@@ -53,27 +59,30 @@ public class MainActivity extends AppCompatActivity {
             //nsdHelper.discoverServices();
         }
     }
+     */
     /**
      * onDestroy: stops the program
      */
 
+    /*
     @Override
     protected void onDestroy() {
-        /*
         nsdHelper.tearDown();
         connection.tearDown();
         super.onDestroy();
-         */
     }
+    */
 
     /**
      * Move to NSDHelper
      * tearDown: stops services and discovery
      */
     // NsdHelper's tearDown method
+    /*
     public void tearDown() {
-        //nsdManager.unregisterService(registrationListener);
-        //nsdManager.stopServiceDiscovery(discoveryListener);
+        nsdManager.unregisterService(registrationListener);
+        nsdManager.stopServiceDiscovery(discoveryListener);
     }
+     */
 
 }

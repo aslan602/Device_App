@@ -33,12 +33,12 @@ public class nsdHelper {
     }
 
     public void registerService(int port) {
-        NetworkThread.registerService(port);
+        //NetworkThread.registerService(port);
     }
 
-    public void discoverServices() {
-        NetworkThread.startNSDManager();
-    }
+    //public void discoverServices() {
+        //NetworkThread.startNSDManager();
+    //}
 
 
 }

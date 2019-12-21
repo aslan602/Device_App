@@ -38,6 +38,7 @@ public class NetworkThread implements Runnable {
     private static final String TAG = "NSD Service";
     private NsdManager.ResolveListener resolveListener;
     public NsdServiceInfo mService;
+    public Context context;
 
     /**
      * run() runs starts MainActivity  in new thread
@@ -47,10 +48,9 @@ public class NetworkThread implements Runnable {
      */
     public void run() {
         // Check to see if there is a WiFi connection.
-
-        ConnectivityManager connMgr = (ConnectivityManager).getSystemService(Context.CONNECTIVITY_SERVICE);
         boolean isWifiConn = false;
         boolean isMobileConn = false;
+        ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         for (Network network : connMgr.getAllNetworks()) {
             NetworkInfo networkInfo = connMgr.getNetworkInfo(network);
             if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
@@ -67,6 +67,7 @@ public class NetworkThread implements Runnable {
          * if there is an available WiFi connection, start process of ServerSocket, registerService,
          * and NSDManager
          */
+        isWifiConn = true;
         if (isWifiConn == true) {
             ServerSocketInitializer ss = new ServerSocketInitializer();
             localPort = ss.initializeServerSocket(); /** Find available port number */
@@ -79,7 +80,7 @@ public class NetworkThread implements Runnable {
         } else { /** Not on WiFi network break thread and throw error message */
             activity.runOnUiThread(new Runnable() {
                 public void run() { /** update to this format: [name].interrupt()*/
-                    Toast.makeText("WiFi connection not available.", this, Toast.LENGTH_LONG).show();
+                    //Toast.makeText("WiFi connection not available.", this, Toast.LENGTH_LONG).show();
                 }
             });
         }
